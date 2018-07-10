@@ -43,6 +43,11 @@ class IntesaSanPaoloXlsxParser(StatementParser):
         self.statement = Statement()
         self.statement.account_id = self._get_account_id()
         self.statement.currency = self._get_currency()
+        self.statement.start_balance = self._get_start_balance()
+        self.statement.start_date = self._get_start_date()
+        self.statement.end_balance = self._get_end_balance()
+        self.statement.end_date = self._get_end_date()
+        logging.debug(self.statement)
 
     def parse(self):
         return super(IntesaSanPaoloXlsxParser, self).parse()
@@ -109,3 +114,21 @@ class IntesaSanPaoloXlsxParser(StatementParser):
                      'Commissione bolletta cbill': 'SRVCHG',
                      'Storno pagamento pos': 'POS'}
         return trans_map[movimento.descrizione]
+
+    def _get_start_balance(self):
+        wb = load_workbook(self.fin)
+        return float(wb['Lista Movimenti']['E11'].value)
+
+    def _get_end_balance(self):
+        wb = load_workbook(self.fin)
+        return float(wb['Lista Movimenti']['E12'].value)
+
+    def _get_start_date(self):
+        wb = load_workbook(self.fin)
+        date = wb['Lista Movimenti']['D11'].value
+        return datetime.strptime(date, '%d.%m.%Y')
+
+    def _get_end_date(self):
+        wb = load_workbook(self.fin)
+        date = wb['Lista Movimenti']['D12'].value
+        return datetime.strptime(date, '%d.%m.%Y')

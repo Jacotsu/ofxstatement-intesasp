@@ -36,6 +36,7 @@ Substitute the zeroes with your bank's BIC/SWIFT code
 
   [IntesaSP]
   BIC = 0000000
+  plugin = IntesaSP
 
 Save and exit the text editor
 
