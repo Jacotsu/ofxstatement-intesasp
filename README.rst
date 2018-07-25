@@ -14,7 +14,7 @@ pip
 
 ::
 
-  pip3 install --user ofxstatement-simple
+  pip3 install --user ofxstatement-intesasp
 
 setup.py
 --------
