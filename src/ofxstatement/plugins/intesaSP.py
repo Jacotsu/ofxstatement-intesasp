@@ -99,6 +99,7 @@ class IntesaSanPaoloXlsxParser(StatementParser):
 
     def _get_transaction_type(movimento):
         trans_map = {'Pagamento pos': 'POS',
+                     'Pagamento effettuato su pos estero': 'POS',
                      'Accredito beu con contabile': 'XFER',
                      'Canone mensile base e servizi aggiuntivi': 'SRVCHG',
                      'Prelievo carta debito su banche del gruppo': 'CASH',
@@ -112,7 +113,8 @@ class IntesaSanPaoloXlsxParser(StatementParser):
                      'Pagamento bolletta cbill': 'PAYMENT',
                      'Beu tramite internet banking': 'PAYMENT',
                      'Commissione bolletta cbill': 'SRVCHG',
-                     'Storno pagamento pos': 'POS'}
+                     'Storno pagamento pos': 'POS',
+                     'Versamento contanti su sportello automatico': 'ATM'}
         return trans_map[movimento.descrizione]
 
     def _get_start_balance(self):
