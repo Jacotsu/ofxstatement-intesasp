@@ -5,7 +5,7 @@ Setup
 from setuptools import find_packages
 from distutils.core import setup
 
-version = "0.1.2"
+version = "0.1.3"
 
 with open('README.rst') as f:
     long_description = f.read()
@@ -15,7 +15,7 @@ setup(name='ofxstatement-intesasp',
       author="Di Campli D. Raffaele Jr",
       author_email="dcdrj.pub@gmail.com",
       url="https://github.com/Jacotsu/ofxstatement-intesasp",
-      description=("Plugin for ofxstatement that supports Intesa San paolo"\
+      description=("Plugin for ofxstatement that supports Intesa San paolo"
                    "xlsx file"),
       long_description=long_description,
       license="GPLv3",
