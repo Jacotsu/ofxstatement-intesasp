@@ -114,6 +114,7 @@ class IntesaSanPaoloXlsxParser(StatementParser):
                      'Beu tramite internet banking': 'PAYMENT',
                      'Commissione bolletta cbill': 'SRVCHG',
                      'Storno pagamento pos': 'POS',
+                     'Storno pagamento pos estero' 'POS',
                      'Versamento contanti su sportello automatico': 'ATM'}
         return trans_map[movimento.descrizione]
 
