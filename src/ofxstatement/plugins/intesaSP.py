@@ -3,6 +3,7 @@
 from openpyxl import load_workbook
 from dataclasses import dataclass
 from datetime import datetime
+from decimal import Decimal
 import logging
 
 from ofxstatement.plugin import Plugin
@@ -19,8 +20,8 @@ class Movimento:
     data_contabile: datetime
     data_valuta: datetime
     descrizione: str
-    accrediti: float
-    addebiti: float
+    accrediti: Decimal
+    addebiti: Decimal
     descrizione_estesa: str
     mezzo: str
 
@@ -56,8 +57,8 @@ class IntesaSanPaoloXlsxParser(StatementParser):
         stat_line = StatementLine(None,
                                   mov.data_contabile,
                                   mov.descrizione_estesa,
-                                  mov.accrediti if mov.accrediti else
-                                  mov.addebiti)
+                                  Decimal(mov.accrediti) if mov.accrediti else
+                                  Decimal(mov.addebiti))
         stat_line.id = generate_transaction_id(stat_line)
         stat_line.date_user = mov.data_valuta
         stat_line.trntype = IntesaSanPaoloXlsxParser._get_transaction_type(mov)
@@ -104,8 +105,6 @@ class IntesaSanPaoloXlsxParser(StatementParser):
                      'Canone mensile base e servizi aggiuntivi': 'SRVCHG',
                      'Prelievo carta debito su banche del gruppo': 'CASH',
                      'Prelievo carta debito su banche italia/sepa': 'CASH',
-                     'Versamento contanti su sportello automatico':
-                     'DIRECTDEP',
                      'Comm.prelievo carta debito italia/sepa': 'SRVCHG',
                      'Commiss. su beu internet banking': 'SRVCHG',
                      'Pagamento telefono': 'PAYMENT',
@@ -115,16 +114,18 @@ class IntesaSanPaoloXlsxParser(StatementParser):
                      'Commissione bolletta cbill': 'SRVCHG',
                      'Storno pagamento pos': 'POS',
                      'Storno pagamento pos estero': 'POS',
-                     'Versamento contanti su sportello automatico': 'ATM'}
+                     'Versamento contanti su sportello automatico': 'ATM',
+                     'Canone annuo o-key sms': 'SRVCHG'
+                     }
         return trans_map[movimento.descrizione]
 
     def _get_start_balance(self):
         wb = load_workbook(self.fin)
-        return float(wb['Lista Movimenti']['E11'].value)
+        return Decimal(wb['Lista Movimenti']['E11'].value)
 
     def _get_end_balance(self):
         wb = load_workbook(self.fin)
-        return float(wb['Lista Movimenti']['E12'].value)
+        return Decimal(wb['Lista Movimenti']['E12'].value)
 
     def _get_start_date(self):
         wb = load_workbook(self.fin)
