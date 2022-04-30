@@ -99,6 +99,8 @@ class IntesaSanPaoloXlsxParser(StatementParser):
                 offset += 1
 
     def _get_transaction_type(movimento):
+        # OFX Spec https://financialdataexchange.org/ofx
+        # 11.4.4.3 Transaction Types Used in <TRNTYPE>
         trans_map = {'Pagamento pos': 'POS',
                      'Pagamento effettuato su pos estero': 'POS',
                      'Accredito beu con contabile': 'XFER',
@@ -115,7 +117,13 @@ class IntesaSanPaoloXlsxParser(StatementParser):
                      'Storno pagamento pos': 'POS',
                      'Storno pagamento pos estero': 'POS',
                      'Versamento contanti su sportello automatico': 'ATM',
-                     'Canone annuo o-key sms': 'SRVCHG'
+                     'Canone annuo o-key sms': 'SRVCHG',
+                     'Pagamento adue': 'DIRECTDEBIT',
+                     'Rata bonif. periodico con contab.': 'REPEATPMT',
+                     'Add. deleghe fisco/inps/regioni': 'DEBIT',
+                     'Pagamento delega f24 via internet banking': 'PAYMENT',
+                     'Bonifico in euro verso ue/sepa canale telem.': 'PAYMENT',
+                     'Accredito bonifico istantaneo': 'DIRECTDEP',
                      }
         return trans_map[movimento.descrizione]
 
