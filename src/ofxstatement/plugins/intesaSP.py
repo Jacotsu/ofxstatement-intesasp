@@ -119,6 +119,7 @@ class IntesaSanPaoloXlsxParser(StatementParser):
                      'Pagamento adue': 'DIRECTDEBIT',
                      'Rata bonif. periodico con contab.': 'REPEATPMT',
                      'Accredito bonifico istantaneo': 'XFER',
+                     'Bonifico in euro verso ue/sepa canale telem.': 'XFER',
                      }
         return trans_map[movimento.descrizione]
 
