@@ -115,7 +115,8 @@ class IntesaSanPaoloXlsxParser(StatementParser):
                      'Storno pagamento pos': 'POS',
                      'Storno pagamento pos estero': 'POS',
                      'Versamento contanti su sportello automatico': 'ATM',
-                     'Canone annuo o-key sms': 'SRVCHG'
+                     'Canone annuo o-key sms': 'SRVCHG',
+                     'Pagamento adue': 'DIRECTDEBIT',
                      }
         return trans_map[movimento.descrizione]
 
