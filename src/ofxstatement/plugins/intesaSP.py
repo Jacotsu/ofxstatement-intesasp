@@ -117,6 +117,7 @@ class IntesaSanPaoloXlsxParser(StatementParser):
                      'Versamento contanti su sportello automatico': 'ATM',
                      'Canone annuo o-key sms': 'SRVCHG',
                      'Pagamento adue': 'DIRECTDEBIT',
+                     'Rata bonif. periodico con contab.': 'REPEATPMT',
                      }
         return trans_map[movimento.descrizione]
 
