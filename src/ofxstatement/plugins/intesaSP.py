@@ -118,6 +118,7 @@ class IntesaSanPaoloXlsxParser(StatementParser):
                      'Canone annuo o-key sms': 'SRVCHG',
                      'Pagamento adue': 'DIRECTDEBIT',
                      'Rata bonif. periodico con contab.': 'REPEATPMT',
+                     'Accredito bonifico istantaneo': 'XFER',
                      }
         return trans_map[movimento.descrizione]
 
