@@ -99,6 +99,8 @@ class IntesaSanPaoloXlsxParser(StatementParser):
                 offset += 1
 
     def _get_transaction_type(movimento):
+        # OFX Spec https://financialdataexchange.org/ofx
+        # 11.4.4.3 Transaction Types Used in <TRNTYPE>
         trans_map = {'Pagamento pos': 'POS',
                      'Pagamento effettuato su pos estero': 'POS',
                      'Accredito beu con contabile': 'XFER',
