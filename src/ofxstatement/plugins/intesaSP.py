@@ -120,9 +120,10 @@ class IntesaSanPaoloXlsxParser(StatementParser):
                      'Canone annuo o-key sms': 'SRVCHG',
                      'Pagamento adue': 'DIRECTDEBIT',
                      'Rata bonif. periodico con contab.': 'REPEATPMT',
-                     'Accredito bonifico istantaneo': 'XFER',
-                     'Bonifico in euro verso ue/sepa canale telem.': 'XFER',
                      'Add. deleghe fisco/inps/regioni': 'DEBIT',
+                     'Pagamento delega f24 via internet banking': 'PAYMENT',
+                     'Bonifico in euro verso ue/sepa canale telem.': 'PAYMENT',
+                     'Accredito bonifico istantaneo': 'DIRECTDEP',
                      }
         return trans_map[movimento.descrizione]
 
