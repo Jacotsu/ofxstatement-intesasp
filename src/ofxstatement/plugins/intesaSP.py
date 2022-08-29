@@ -1,15 +1,15 @@
 #!/usr/bin/env python3.6
 
-from openpyxl import load_workbook
+import logging
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
-import logging
 
-from ofxstatement.plugin import Plugin
 from ofxstatement.parser import StatementParser
+from ofxstatement.plugin import Plugin
 from ofxstatement.statement import (Statement, StatementLine,
                                     generate_transaction_id)
+from openpyxl import load_workbook
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('IntesaSP')
@@ -24,6 +24,11 @@ class Movimento:
     addebiti: Decimal
     descrizione_estesa: str
     mezzo: str
+
+    def __post_init__(self):
+        # Se descrizione_estesa non presente, usare la descrizione
+        if not self.descrizione_estesa:
+            self.descrizione_estesa = self.descrizione
 
 
 class IntesaSanPaoloPlugin(Plugin):
@@ -70,10 +75,12 @@ class IntesaSanPaoloXlsxParser(StatementParser):
         return wb['Lista Movimenti']['D8'].value
 
     def _get_currency(self):
-        trans_map = {'Euro': 'EUR'}
+        # !!! Write All key value lower case !!!
+        trans_map = {'euro': 'EUR',
+                     'eur': 'EUR'}
         wb = load_workbook(self.fin)
         val = wb['Lista Movimenti']['D22'].value
-        return trans_map[val]
+        return trans_map[val.lower()]
 
     def _get_movimenti(self):
         wb = load_workbook(self.fin)
@@ -84,11 +91,11 @@ class IntesaSanPaoloXlsxParser(StatementParser):
 
         while True:
             data = wb['Lista Movimenti'][
-                        '{}{}:{}{}'.format(starting_column,
-                                           starting_row + offset,
-                                           ending_column,
-                                           starting_row + offset
-                                           )]
+                '{}{}:{}{}'.format(starting_column,
+                                   starting_row + offset,
+                                   ending_column,
+                                   starting_row + offset
+                                   )]
 
             values = [*map(lambda x: x.value, data[0])]
             logging.debug(values)
@@ -101,31 +108,52 @@ class IntesaSanPaoloXlsxParser(StatementParser):
     def _get_transaction_type(movimento):
         # OFX Spec https://financialdataexchange.org/ofx
         # 11.4.4.3 Transaction Types Used in <TRNTYPE>
-        trans_map = {'Pagamento pos': 'POS',
-                     'Pagamento effettuato su pos estero': 'POS',
-                     'Accredito beu con contabile': 'XFER',
-                     'Canone mensile base e servizi aggiuntivi': 'SRVCHG',
-                     'Prelievo carta debito su banche del gruppo': 'CASH',
-                     'Prelievo carta debito su banche italia/sepa': 'CASH',
-                     'Comm.prelievo carta debito italia/sepa': 'SRVCHG',
-                     'Commiss. su beu internet banking': 'SRVCHG',
-                     'Pagamento telefono': 'PAYMENT',
-                     'Pagamento mav via internet banking': 'PAYMENT',
-                     'Pagamento bolletta cbill': 'PAYMENT',
-                     'Beu tramite internet banking': 'PAYMENT',
-                     'Commissione bolletta cbill': 'SRVCHG',
-                     'Storno pagamento pos': 'POS',
-                     'Storno pagamento pos estero': 'POS',
-                     'Versamento contanti su sportello automatico': 'ATM',
-                     'Canone annuo o-key sms': 'SRVCHG',
-                     'Pagamento adue': 'DIRECTDEBIT',
-                     'Rata bonif. periodico con contab.': 'REPEATPMT',
-                     'Add. deleghe fisco/inps/regioni': 'DEBIT',
-                     'Pagamento delega f24 via internet banking': 'PAYMENT',
-                     'Bonifico in euro verso ue/sepa canale telem.': 'PAYMENT',
-                     'Accredito bonifico istantaneo': 'DIRECTDEP',
-                     }
-        return trans_map[movimento.descrizione]
+        # !!! Write All key value lower case !!!
+
+        trans_map = {
+            # Pagamenti POS
+            'pagamento pos': 'POS',
+            'pagamento tramite pos': 'POS',
+            'pagamento effettuato su pos estero': 'POS',
+            'storno pagamento pos': 'POS',
+            'storno pagamento pos estero': 'POS',
+            # Accrediti
+            'accredito beu con contabile': 'XFER',
+            'canone mensile base e servizi aggiuntivi': 'SRVCHG',
+            'prelievo carta debito su banche del gruppo': 'CASH',
+            'prelievo carta debito su banche italia/sepa': 'CASH',
+            'comm.prelievo carta debito italia/sepa': 'SRVCHG',
+            'commiss. su beu internet banking': 'SRVCHG',
+            'stipendio o pensione': 'CREDIT',  # TODO: verify
+            # Ricariche Cellulari
+            'pagamento mav via internet banking': 'PAYMENT',
+            'pagamento bolletta cbill': 'PAYMENT',
+            'beu tramite internet banking': 'PAYMENT',
+            'pagamento telefono': 'PAYMENT',
+            'ricarica tramite internet:vodafonecard': 'PAYMENT',  # TODO: verify
+            'ricarica tramite internet:windtre': 'PAYMENT',  # TODO: verify
+            # Commissioni Pagamento
+            'commissione bolletta cbill': 'FEE',
+            'commissioni bollettino postale via internet': 'FEE',  # TODO: verify
+            'commissioni e spese adue': 'FEE',
+            'commissioni su pagamento via internet': 'FEE',  # TODO: verify
+            'imposta di bollo e/c e rendiconto': 'FEE',  # TODO: verify
+            # Operazioni Bancarie
+            'versamento contanti su sportello automatico': 'ATM',
+            'canone annuo o-key sms': 'SRVCHG',
+            'pagamento adue': 'DIRECTDEBIT',
+            'rata bonif. periodico con contab.': 'REPEATPMT',
+            'bonifico in euro verso ue/sepa canale telem.': 'PAYMENT',
+            'accredito bonifico istantaneo': 'DIRECTDEP',
+            'pagamenti disposti su circuito fast pay': 'PAYMENT',  # TODO: verify
+            'pagamento bollettino postale via internet': 'PAYMENT',  # TODO: verify
+            'pagamento via internet': 'DIRECTDEBIT',  # TODO: verify
+            # Other
+            'donazione preautorizzata ad ente no profit': 'DIRECTDEBIT',
+            'add. deleghe fisco/inps/regioni': 'DEBIT',
+            'pagamento delega f24 via internet banking': 'PAYMENT',
+        }
+        return trans_map[movimento.descrizione.lower()]
 
     def _get_start_balance(self):
         wb = load_workbook(self.fin)
