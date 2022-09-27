@@ -26,9 +26,8 @@ class Movimento:
     mezzo: str
 
     def __post_init__(self):
-        # Se descrizione_estesa non presente, usare la descrizione
-        if not self.descrizione_estesa:
-            self.descrizione_estesa = self.descrizione
+        # Modificare descrizione_estesa per comprendere sempre la descrizione
+        self.descrizione_estesa = "({}) {}".format(self.descrizione, self.descrizione_estesa)
 
 
 class IntesaSanPaoloPlugin(Plugin):
