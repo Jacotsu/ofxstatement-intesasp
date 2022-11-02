@@ -117,42 +117,42 @@ class IntesaSanPaoloXlsxParser(StatementParser):
             'storno pagamento pos': 'POS',
             'storno pagamento pos estero': 'POS',
             # Accrediti
-            'accredito beu con contabile': 'XFER',
             'canone mensile base e servizi aggiuntivi': 'SRVCHG',
             'prelievo carta debito su banche del gruppo': 'CASH',
             'prelievo carta debito su banche italia/sepa': 'CASH',
             'comm.prelievo carta debito italia/sepa': 'SRVCHG',
             'commiss. su beu internet banking': 'SRVCHG',
-            'stipendio o pensione': 'CREDIT',  # TODO: verify
+            'stipendio o pensione': 'CREDIT',
             # Ricariche Cellulari
             'pagamento mav via internet banking': 'PAYMENT',
             'pagamento bolletta cbill': 'PAYMENT',
-            'beu tramite internet banking': 'PAYMENT',
             'pagamento telefono': 'PAYMENT',
-            'ricarica tramite internet:vodafonecard': 'PAYMENT',  # TODO: verify
-            'ricarica tramite internet:windtre': 'PAYMENT',  # TODO: verify
+            'ricarica tramite internet:vodafonecard': 'PAYMENT',
+            'ricarica tramite internet:windtre': 'PAYMENT',
             # Commissioni Pagamento
             'commissione bolletta cbill': 'FEE',
-            'commissioni bollettino postale via internet': 'FEE',  # TODO: verify
+            'commissioni bollettino postale via internet': 'FEE',
             'commissioni e spese adue': 'FEE',
-            'commissioni su pagamento via internet': 'FEE',  # TODO: verify
-            'imposta di bollo e/c e rendiconto': 'FEE',  # TODO: verify
+            'commissioni su pagamento via internet': 'FEE',
+            'imposta di bollo e/c e rendiconto': 'FEE',
             # Operazioni Bancarie
+            'accredito beu con contabile': 'XFER',
+            'beu tramite internet banking': 'XFER',
             'versamento contanti su sportello automatico': 'ATM',
             'canone annuo o-key sms': 'SRVCHG',
             'pagamento adue': 'DIRECTDEBIT',
             'rata bonif. periodico con contab.': 'REPEATPMT',
             'bonifico in euro verso ue/sepa canale telem.': 'PAYMENT',
             'accredito bonifico istantaneo': 'DIRECTDEP',
-            'pagamenti disposti su circuito fast pay': 'PAYMENT',  # TODO: verify
-            'pagamento bollettino postale via internet': 'PAYMENT',  # TODO: verify
-            'pagamento via internet': 'DIRECTDEBIT',  # TODO: verify
+            'pagamenti disposti su circuito fast pay': 'PAYMENT',
+            'pagamento bollettino postale via internet': 'PAYMENT',
+            'pagamento via internet': 'DIRECTDEBIT',
             # Other
             'donazione preautorizzata ad ente no profit': 'DIRECTDEBIT',
             'add. deleghe fisco/inps/regioni': 'DEBIT',
             'pagamento delega f24 via internet banking': 'PAYMENT',
         }
-        return trans_map[movimento.descrizione.lower()]
+        return trans_map.get(movimento.descrizione.lower(),'DIRECTDEBIT')
 
     def _get_start_balance(self):
         wb = load_workbook(self.fin)
