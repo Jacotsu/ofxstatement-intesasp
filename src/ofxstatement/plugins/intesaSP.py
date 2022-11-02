@@ -121,7 +121,6 @@ class IntesaSanPaoloXlsxParser(StatementParser):
             'prelievo carta debito su banche del gruppo': 'CASH',
             'prelievo carta debito su banche italia/sepa': 'CASH',
             'comm.prelievo carta debito italia/sepa': 'SRVCHG',
-            'commiss. su beu internet banking': 'SRVCHG',
             'stipendio o pensione': 'CREDIT',
             # Ricariche Cellulari
             'pagamento mav via internet banking': 'PAYMENT',
@@ -135,6 +134,7 @@ class IntesaSanPaoloXlsxParser(StatementParser):
             'commissioni e spese adue': 'FEE',
             'commissioni su pagamento via internet': 'FEE',
             'imposta di bollo e/c e rendiconto': 'FEE',
+            'commiss. su beu internet banking': 'FEE',
             # Operazioni Bancarie
             'accredito beu con contabile': 'XFER',
             'beu tramite internet banking': 'XFER',
