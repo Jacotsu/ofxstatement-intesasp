@@ -152,7 +152,13 @@ class IntesaSanPaoloXlsxParser(StatementParser):
             'add. deleghe fisco/inps/regioni': 'DEBIT',
             'pagamento delega f24 via internet banking': 'PAYMENT',
         }
-        return trans_map.get(movimento.descrizione.lower(),'DIRECTDEBIT')
+        currentTransition = trans_map.get(movimento.descrizione.lower())
+        if currentTransition is None:
+          currentTransition = 'DIRECTDEBIT'
+          print("Warning!! The transition type '{}' is not present yet on code!!\n" \
+                "PLESE report this issue on GitHub Repository 'https://github.com/Jacotsu/ofxstatement-intesasp/issues' to Help US" \
+                "Now for that Transition will be assign the default type: {}".format(movimento.descrizione, currentTransition))
+        return currentTransition
 
     def _get_start_balance(self):
         wb = load_workbook(self.fin)
