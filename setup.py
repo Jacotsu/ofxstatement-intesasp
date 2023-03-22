@@ -5,9 +5,9 @@ Setup
 from setuptools import find_packages
 from distutils.core import setup
 
-version = "0.1.4"
+version = "0.2.0"
 
-with open('README.rst') as f:
+with open('README.md') as f:
     long_description = f.read()
 
 setup(name='ofxstatement-intesasp',
