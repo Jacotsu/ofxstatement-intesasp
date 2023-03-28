@@ -201,7 +201,7 @@ class IntesaSanPaoloXlsxParser(StatementParser):
         if 'Lista Movimenti' in self.wb.sheetnames:
             print('"Lista Movimenti" exists, excel version 1 parse will be used')
             self.excelVersion = 1
-        if 'Lista Operazione' in self.wb.sheetnames:
+        elif 'Lista Operazione' in self.wb.sheetnames:
             print('"Lista Operazione" exists, excel version 2 parse will be used')
             self.excelVersion = 2
         else:
