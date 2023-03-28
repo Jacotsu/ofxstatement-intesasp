@@ -60,3 +60,12 @@ After that, reload your terminal (close and then reopen) and the usage change to
       . ~/.bash_aliases
   fi
 ```
+
+## How use OFX file after conversion
+
+The `ofx` format stands for '*Open Financial Exchange*', it can be used to transfer your accounting records from one database to another.
+This repository in particular allows you to convert the records that **Intesa San Paolo** shares via Excel into this *open source* format.
+Once you have the `ofx` file, you can use any program to manage your finances.
+Among the many available, a non-exhaustive list of open source products is:
+
+- [HomeBank](http://homebank.free.fr/en/index.php), continuously updated program, present everywhere except in smartphones, with many beautiful ideas and listening to the community. **100% compatibility** 
