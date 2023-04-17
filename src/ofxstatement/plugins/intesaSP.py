@@ -196,8 +196,8 @@ class IntesaSanPaoloXlsxParser(StatementParser):
     wb = None
 
     def __init__(self, filename):
-        self.fin = filename
-        self.wb = load_workbook(self.fin)
+        self.file = filename
+        self.wb = load_workbook(self.file)
         if 'Lista Movimenti' in self.wb.sheetnames:
             print('"Lista Movimenti" exists, excel version 1 parse will be used')
             self.excelVersion = 1
@@ -221,7 +221,7 @@ class IntesaSanPaoloXlsxParser(StatementParser):
     Override method, use to obrain iterable object consisting of a line per transaction
     """
 
-    def split_records(self):
+    def split_records(self) -> Movimento:
         if self.excelVersion == 1:
             return self._get_movimenti_V1()
         if self.excelVersion == 2:
@@ -285,24 +285,28 @@ class IntesaSanPaoloXlsxParser(StatementParser):
     def _get_start_date(self) -> datetime:
         if self.excelVersion == 1:
             date = self.wb['Lista Movimenti']['D11'].value
-            formatData = '%d.%m.%Y'
+            return datetime.strptime(date, '%d.%m.%Y')
         if self.excelVersion == 2:
-            date = self.wb['Lista Operazione']['C16'].value
-            formatData = '%d/%m/%Y'
+            # On this version, C16 isn't always present, so calculate variation directly from record.
+            # Operation are sort by date descending, so select last record
+            colDate = self.wb['Lista Operazione']["A"][20:]
+            max_col_row = len([cell for cell in colDate if cell.value]) + 20
+            date = self.wb['Lista Operazione'][f'A{max_col_row}'].value
+            return date
         else:
             return None
-        return datetime.strptime(date, formatData)
 
     def _get_end_date(self) -> datetime:
         if self.excelVersion == 1:
             date = self.wb['Lista Movimenti']['D12'].value
-            formatData = '%d.%m.%Y'
+            return datetime.strptime(date, '%d.%m.%Y')
         if self.excelVersion == 2:
-            date = self.wb['Lista Operazione']['C17'].value
-            formatData = '%d/%m/%Y'
+            # On this version, C17 isn't always present, so calculate variation directly from record.
+            # Operation are sort by date descending, so select first record
+            date = self.wb['Lista Operazione']['A20'].value
+            return date
         else:
             return None
-        return datetime.strptime(date, formatData)
 
     """ Private method to parse all record lines """
 
