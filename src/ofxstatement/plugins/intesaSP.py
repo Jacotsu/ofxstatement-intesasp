@@ -44,13 +44,16 @@ class Movimento_V1(Movimento):
 
     def __post_init__(self):
         # Modificare descrizione_estesa per comprendere sempre la descrizione
-        self.descrizione_estesa = "({}) {}".format(self.descrizione, self.descrizione_estesa)
+        self.descrizione_estesa = f"({self.descrizione}) "\
+                f"{self.descrizione_estesa}"
 
         # Una volta raccolti i dati, li formatto nello standard corretto
-        self.stat_line = StatementLine(None,
-                                       self.data_contabile,
-                                       self.descrizione_estesa,
-                                       Decimal(self.accrediti) if self.accrediti else Decimal(self.addebiti))
+        self.stat_line = StatementLine(
+            None,
+            self.data_contabile,
+            self.descrizione_estesa,
+            Decimal(self.accrediti) if self.accrediti else Decimal(self.addebiti)
+        )
         self.stat_line.id = generate_transaction_id(self.stat_line)
         self.stat_line.date_user = self.data_valuta
         self.stat_line.trntype = self._get_transaction_type()
@@ -104,12 +107,16 @@ class Movimento_V1(Movimento):
             'add. deleghe fisco/inps/regioni': 'DEBIT',
             'pagamento delega f24 via internet banking': 'PAYMENT',
         }
-        currentTransition = trans_map.get(self.descrizione.lower())
-        if currentTransition is None:
+        try:
+            currentTransition = trans_map[self.descrizione.lower()]
+        except KeyError:
             currentTransition = 'DIRECTDEBIT'
-            print(f"Warning!! The transition type '{self.descrizione}' is not present yet on code!!\n" \
-                  f"PLESE report this issue on GitHub Repository '{GITHUB_URL}' to Help US" \
-                  f"Now for that Transition will be assign the default type: {currentTransition}")
+            logging.warning(
+                f"Warning!! The transition type '{self.descrizione}' is not "
+                "present yet on code!!\n PLESE report this issue on GitHub "
+                f"Repository '{GITHUB_URL}' to Help US Now for that Transition"
+                f" will be assign the default type: {currentTransition}"
+            )
         return currentTransition
 
 
@@ -126,10 +133,13 @@ class Movimento_V2(Movimento):
 
     def __post_init__(self):
         # Modificare descrizione_estesa per comprendere sempre la descrizione
-        descrizione_estesa = f"[({self.categoria})-({self.operazione})] {self.dettagli}"
+        descrizione_estesa = f"[({self.categoria})-({self.operazione})] "\
+                f"{self.dettagli}"
 
         # Una volta raccolti i dati, li formatto nello standard corretto
-        self.stat_line = StatementLine(None, self.data, descrizione_estesa, Decimal(self.importo))
+        self.stat_line = StatementLine(
+            None, self.data, descrizione_estesa, Decimal(self.importo)
+        )
         self.stat_line.id = generate_transaction_id(self.stat_line)
         self.stat_line.date_user = self.data
         self.stat_line.trntype = self._get_transaction_type()
@@ -174,12 +184,17 @@ class Movimento_V2(Movimento):
             'viaggi e vacanze': 'POS'
         }
 
-        currentTransition = categoryMap.get(self.categoria.lower())
-        if currentTransition is None:
+        try:
+            currentTransition = categoryMap[self.categoria.lower()]
+        except KeyError:
             currentTransition = 'CREDIT' if self.importo >= 0 else 'DEBIT'
-            print(f"Op: '{self.categoria}' is not present yet, assign '{currentTransition}'")
-            print(f"PLESE report this issue on GitHub Repository '{GITHUB_URL}' to Help US")
-            print("-" * 60)
+            logging.warning(
+                f"Unknown category: '{self.categoria}' "
+                f"assigning generic category: '{currentTransition}'"
+                f"PLESE open an issue on GitHub '{GITHUB_URL}' "
+                "in order the help us fix it"
+                "-"*60
+            )
         return currentTransition
 
 
@@ -192,20 +207,20 @@ class IntesaSanPaoloPlugin(Plugin):
 
 
 class IntesaSanPaoloXlsxParser(StatementParser):
-    excelVersion: int = None
+    excel_version: int = None
     wb = None
 
     def __init__(self, filename):
         self.file = filename
         self.wb = load_workbook(self.file)
         if 'Lista Movimenti' in self.wb.sheetnames:
-            print('"Lista Movimenti" exists, excel version 1 parse will be used')
-            self.excelVersion = 1
+            logging.debug('Detected "Lista Movimenti" using V1 excel parser')
+            self.excel_version = 1
         elif 'Lista Operazione' in self.wb.sheetnames:
-            print('"Lista Operazione" exists, excel version 2 parse will be used')
-            self.excelVersion = 2
+            logging.debug('Detected "Lista Operazione" using V2 excel parser')
+            self.excel_version = 2
         else:
-            print('No know sheet found, impossible continue')
+            logging.error('Unknown excel format, aborting')
             exit(os.EX_IOERR)
 
         self.statement = Statement()
@@ -218,75 +233,63 @@ class IntesaSanPaoloXlsxParser(StatementParser):
         logging.debug(self.statement)
 
     """
-    Override method, use to obrain iterable object consisting of a line per transaction
+    Override method, use to obrain iterable object consisting of a line per
+    transaction
     """
-
     def split_records(self) -> Movimento:
-        if self.excelVersion == 1:
+        if self.excel_version == 1:
             return self._get_movimenti_V1()
-        if self.excelVersion == 2:
+        if self.excel_version == 2:
             return self._get_movimenti_V2()
-        else:
-            return None
 
-    # TODO: Capire se serve
     """
     Override method, use to generate Statement object
     """
-
     def parse(self):
         return super(IntesaSanPaoloXlsxParser, self).parse()
 
     """
-    Override use to Parse given transaction line and return StatementLine object
+    Override use to Parse given transaction line and return StatementLine
+    object
     """
-
     def parse_record(self, mov: Movimento) -> StatementLine:
         logging.debug(mov.stat_line)
         return mov.stat_line
 
     def _get_account_id(self) -> str:
-        if self.excelVersion == 1:
+        if self.excel_version == 1:
             return self.wb['Lista Movimenti']['D8'].value
-        if self.excelVersion == 2:
+        if self.excel_version == 2:
             return self.wb['Lista Operazione']['C7'].value.split(" ")[1]
-        else:
-            return None
 
     def _get_currency(self) -> str:
         # !!! Write All key value lower case !!!
         trans_map = {'euro': 'EUR',
                      'eur': 'EUR'}
-        if self.excelVersion == 1:
+        if self.excel_version == 1:
             val = self.wb['Lista Movimenti']['D22'].value
-        if self.excelVersion == 2:
+        if self.excel_version == 2:
             # Suppose all operation have same currency
             val = self.wb['Lista Operazione']['G20'].value  # First operation
-        else:
-            return None
         return trans_map[val.lower()]
 
     def _get_start_balance(self) -> Decimal:
-        if self.excelVersion == 1:
+        if self.excel_version == 1:
             return Decimal(self.wb['Lista Movimenti']['E11'].value)
-        if self.excelVersion == 2:
-            return None
-        else:
+        if self.excel_version == 2:
             return None
 
     def _get_end_balance(self) -> Decimal:
-        if self.excelVersion == 1:
+        if self.excel_version == 1:
             return Decimal(self.wb['Lista Movimenti']['E12'].value)
-        if self.excelVersion == 2:
-            return None
-        else:
+        if self.excel_version == 2:
             return None
 
     def _get_start_date(self) -> datetime:
-        if self.excelVersion == 1:
+        if self.excel_version == 1:
             date = self.wb['Lista Movimenti']['D11'].value
             return datetime.strptime(date, '%d.%m.%Y')
-        if self.excelVersion == 2:
+        if self.excel_version == 2:
             # On this version, C16 isn't always present, so calculate variation directly from record.
             # Operation are sort by date descending, so select last record
             colDate = self.wb['Lista Operazione']["A"][20:]
@@ -297,10 +300,10 @@ class IntesaSanPaoloXlsxParser(StatementParser):
             return None
 
     def _get_end_date(self) -> datetime:
-        if self.excelVersion == 1:
+        if self.excel_version == 1:
             date = self.wb['Lista Movimenti']['D12'].value
             return datetime.strptime(date, '%d.%m.%Y')
-        if self.excelVersion == 2:
+        if self.excel_version == 2:
             # On this version, C17 isn't always present, so calculate variation directly from record.
             # Operation are sort by date descending, so select first record
             date = self.wb['Lista Operazione']['A20'].value
@@ -309,7 +312,6 @@ class IntesaSanPaoloXlsxParser(StatementParser):
             return None
 
     """ Private method to parse all record lines """
-
     def _get_movimenti_V1(self) -> Iterator[Movimento_V1]:
         starting_column = 'A'
         ending_column = 'G'
@@ -317,8 +319,9 @@ class IntesaSanPaoloXlsxParser(StatementParser):
         offset = 0
 
         while True:
-            data = self.wb['Lista Movimenti']['{}{}:{}{}'
-            .format(starting_column, starting_row + offset, ending_column, starting_row + offset)]
+            data = self.wb['Lista Movimenti']\
+                   [f'{starting_column}{starting_row + offset}:'
+                    f'{ending_column}{starting_row + offset}']
             offset += 1
 
             values = [*map(lambda x: x.value, data[0])]
@@ -336,8 +339,9 @@ class IntesaSanPaoloXlsxParser(StatementParser):
         offset = 0
 
         while True:
-            data = self.wb['Lista Operazione']['{}{}:{}{}'
-            .format(starting_column, starting_row + offset, ending_column, starting_row + offset)]
+            data = self.wb['Lista Operazione']\
+                   [f'{starting_column}{starting_row + offset}:'
+                    f'{ending_column}{starting_row + offset}']
             offset += 1
             values = [*map(lambda x: x.value, data[0])]
             logging.debug(values)
