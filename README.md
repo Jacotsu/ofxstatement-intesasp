@@ -24,10 +24,11 @@ To edit the config file run this command
 ```bash
 $ ofxstatement edit-config
 ```
-Substitute the zeroes with your bank's BIC/SWIFT code
+Substitute the zeroes with your bank's ABI and CAB codes (The italian equivalent of BIC code)
 ```
 [IntesaSP]
-BIC = 0000000
+ABI = 00000
+CAB = 00000
 plugin = IntesaSP
 ```
 

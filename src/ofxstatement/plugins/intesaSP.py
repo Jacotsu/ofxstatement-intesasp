@@ -201,8 +201,7 @@ class Movimento_V2(Movimento):
 class IntesaSanPaoloPlugin(Plugin):
 
     def get_parser(self, filename):
-        parser = IntesaSanPaoloXlsxParser(filename)
-        parser.statement.bank_id = self.settings.get('BIC', 'IntesaSP')
+        parser = IntesaSanPaoloXlsxParser(filename, self.settings)
         return parser
 
 
@@ -210,7 +209,8 @@ class IntesaSanPaoloXlsxParser(StatementParser):
     excel_version: int = None
     wb = None
 
-    def __init__(self, filename):
+    def __init__(self, filename, settings):
+        logging.debug(settings)
         self.file = filename
         self.wb = load_workbook(self.file)
         if 'Lista Movimenti' in self.wb.sheetnames:
@@ -224,6 +224,7 @@ class IntesaSanPaoloXlsxParser(StatementParser):
             exit(os.EX_IOERR)
 
         self.statement = Statement()
+        self.statement.bank_id = settings.get('abi')
         self.statement.account_id = self._get_account_id()
         self.statement.currency = self._get_currency()
         self.statement.start_balance = self._get_start_balance()
@@ -259,8 +260,11 @@ class IntesaSanPaoloXlsxParser(StatementParser):
     def _get_account_id(self) -> str:
         if self.excel_version == 1:
             return self.wb['Lista Movimenti']['D8'].value
-        if self.excel_version == 2:
-            return self.wb['Lista Operazione']['C7'].value.split(" ")[1]
+        elif self.excel_version == 2:
+            # Remove the slash in order to make it consistent with the V1
+            # version
+            return self.wb['Lista Operazione']['C7'].value\
+                    .split(" ")[1].replace('/', '')
 
     def _get_currency(self) -> str:
         # !!! Write All key value lower case !!!
@@ -268,28 +272,31 @@ class IntesaSanPaoloXlsxParser(StatementParser):
                      'eur': 'EUR'}
         if self.excel_version == 1:
             val = self.wb['Lista Movimenti']['D22'].value
-        if self.excel_version == 2:
-            # Suppose all operation have same currency
+        elif self.excel_version == 2:
+            # Suppose all operations have the same currency
+            # Takes the currency from the first operation
+            # this should be safe because there is always atleast 1 operation
+            # since you can't export empty files
             val = self.wb['Lista Operazione']['G20'].value  # First operation
         return trans_map[val.lower()]
 
     def _get_start_balance(self) -> Decimal:
         if self.excel_version == 1:
             return Decimal(self.wb['Lista Movimenti']['E11'].value)
-        if self.excel_version == 2:
+        elif self.excel_version == 2:
             return None
 
     def _get_end_balance(self) -> Decimal:
         if self.excel_version == 1:
             return Decimal(self.wb['Lista Movimenti']['E12'].value)
-        if self.excel_version == 2:
+        elif self.excel_version == 2:
             return None
 
     def _get_start_date(self) -> datetime:
         if self.excel_version == 1:
             date = self.wb['Lista Movimenti']['D11'].value
             return datetime.strptime(date, '%d.%m.%Y')
-        if self.excel_version == 2:
+        elif self.excel_version == 2:
             # On this version, C16 isn't always present, so calculate variation directly from record.
             # Operation are sort by date descending, so select last record
             colDate = self.wb['Lista Operazione']["A"][20:]
@@ -303,8 +310,9 @@ class IntesaSanPaoloXlsxParser(StatementParser):
         if self.excel_version == 1:
             date = self.wb['Lista Movimenti']['D12'].value
             return datetime.strptime(date, '%d.%m.%Y')
-        if self.excel_version == 2:
-            # On this version, C17 isn't always present, so calculate variation directly from record.
+        elif self.excel_version == 2:
+            # On this version, C17 isn't always present, so calculate
+            # variation directly from record.
             # Operation are sort by date descending, so select first record
             date = self.wb['Lista Operazione']['A20'].value
             return date
@@ -349,7 +357,7 @@ class IntesaSanPaoloXlsxParser(StatementParser):
                 # Table finish, end loop
                 break
             if values[4] == "NON CONTABILIZZATO":
-                # This tool save only finish transaction
+                # save only accounted transactions
                 continue
             else:
                 yield Movimento_V2(*values)
