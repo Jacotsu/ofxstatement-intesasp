@@ -109,16 +109,16 @@ class Movimento_V1(Movimento):
             'pagamento delega f24 via internet banking': 'PAYMENT',
         }
         try:
-            currentTransition = trans_map[self.descrizione.lower()]
+            cur_transaction = trans_map[self.descrizione.lower()]
         except KeyError:
-            currentTransition = 'DIRECTDEBIT'
+            cur_transaction = 'DIRECTDEBIT'
             logging.warning(
-                f"Warning!! The transition type '{self.descrizione}' is not "
-                "present yet on code!!\n PLESE report this issue on GitHub "
-                f"Repository '{GITHUB_URL}' to Help US Now for that Transition"
-                f" will be assign the default type: {currentTransition}"
+                f"Unknown transaction type: '{self.descrizione}', "
+                f"assigning default transaction type '{cur_transaction}'\n"
+                f"PLEASE open an issue on GitHub '{GITHUB_URL}' "
+                "in order to help us fix it"
             )
-        return currentTransition
+        return cur_transaction
 
 
 @dataclass
@@ -133,11 +133,14 @@ class Movimento_V2(Movimento):
     importo: Decimal
 
     def __post_init__(self):
-        # Modificare descrizione_estesa per comprendere sempre la descrizione
+        # Modificare descrizione_estesa per comprendere sempre la categoria
         descrizione_estesa = f"[({self.categoria})-({self.operazione})] "\
                 f"{self.dettagli}"
 
         # Una volta raccolti i dati, li formatto nello standard corretto
+        # NB: Questo formato non prevede la differenziazione tra la data
+        #     contabile e quella di valuta, tutte le transazione useranno la
+        #     data di valuta come riferimento
         self.stat_line = StatementLine(
             None, self.data, descrizione_estesa, Decimal(self.importo)
         )
@@ -186,17 +189,16 @@ class Movimento_V2(Movimento):
         }
 
         try:
-            currentTransition = categoryMap[self.categoria.lower()]
+            cur_transaction = categoryMap[self.categoria.lower()]
         except KeyError:
-            currentTransition = 'CREDIT' if self.importo >= 0 else 'DEBIT'
+            cur_transaction = 'CREDIT' if self.importo >= 0 else 'DEBIT'
             logging.warning(
-                f"Unknown category: '{self.categoria}' "
-                f"assigning generic category: '{currentTransition}'"
-                f"PLESE open an issue on GitHub '{GITHUB_URL}' "
-                "in order the help us fix it"
-                "-"*60
+                f"Unknown category: '{self.categoria}', "
+                f"assigning generic category: '{cur_transaction}'"
+                f"PLEASE open an issue on GitHub '{GITHUB_URL}' "
+                "in order to help us fix it"
             )
-        return currentTransition
+        return cur_transaction
 
 
 class IntesaSanPaoloPlugin(Plugin):
