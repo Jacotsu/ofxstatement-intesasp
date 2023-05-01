@@ -214,19 +214,20 @@ class IntesaSanPaoloXlsxParser(StatementParser):
         self.file = filename
         self.wb = load_workbook(self.file)
         if 'Lista Movimenti' in self.wb.sheetnames:
-            logging.debug('Detected "Lista Movimenti" using V1 excel parser')
+            logging.debug('Detected "Lista Movimenti", using V1 excel parser')
             self.excel_version = 1
         elif 'Lista Operazione' in self.wb.sheetnames:
-            logging.debug('Detected "Lista Operazione" using V2 excel parser')
+            logging.debug('Detected "Lista Operazione", using V2 excel parser')
             self.excel_version = 2
         else:
             logging.error('Unknown excel format, aborting')
             exit(os.EX_IOERR)
 
-        self.statement = Statement()
-        self.statement.bank_id = settings.get('abi')
-        self.statement.account_id = self._get_account_id()
-        self.statement.currency = self._get_currency()
+        self.statement = Statement(
+            settings.get('abi'),
+            self._get_account_id(),
+            self._get_currency()
+        )
         self.statement.start_balance = self._get_start_balance()
         self.statement.start_date = self._get_start_date()
         self.statement.end_balance = self._get_end_balance()
@@ -297,11 +298,22 @@ class IntesaSanPaoloXlsxParser(StatementParser):
             date = self.wb['Lista Movimenti']['D11'].value
             return datetime.strptime(date, '%d.%m.%Y')
         elif self.excel_version == 2:
-            # On this version, C16 isn't always present, so calculate variation directly from record.
+            # On this version, C16 isn't always present, so calculate
+            # variation directly from record.
             # Operation are sort by date descending, so select last record
-            colDate = self.wb['Lista Operazione']["A"][20:]
-            max_col_row = len([cell for cell in colDate if cell.value]) + 20
-            date = self.wb['Lista Operazione'][f'A{max_col_row}'].value
+            try:
+                date = datetime.strptime(
+                    self.wb['Lista Operazione']["C16"].value, '%d/%m/%Y'
+                )
+            except TypeError:
+                date = None
+                # Find oldest date
+                for row in self.wb['Lista Operazione'].iter_rows(
+                        20, values_only=True):
+                    if row[0]:
+                        date = row[0]
+                    else:
+                        break
             return date
         else:
             return None
@@ -314,7 +326,12 @@ class IntesaSanPaoloXlsxParser(StatementParser):
             # On this version, C17 isn't always present, so calculate
             # variation directly from record.
             # Operation are sort by date descending, so select first record
-            date = self.wb['Lista Operazione']['A20'].value
+            try:
+                date = datetime.strptime(
+                    self.wb['Lista Operazione']["C17"].value, '%d/%m/%Y'
+                )
+            except TypeError:
+                date = self.wb['Lista Operazione']["A20"].value
             return date
         else:
             return None
