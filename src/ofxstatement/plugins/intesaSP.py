@@ -12,6 +12,7 @@ from ofxstatement.plugin import Plugin
 from ofxstatement.statement import (Statement, StatementLine,
                                     generate_transaction_id)
 from openpyxl import load_workbook
+from openpyxl.utils import column_index_from_string
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('IntesaSP')
@@ -315,8 +316,6 @@ class IntesaSanPaoloXlsxParser(StatementParser):
                     else:
                         break
             return date
-        else:
-            return None
 
     def _get_end_date(self) -> datetime:
         if self.excel_version == 1:
@@ -333,48 +332,36 @@ class IntesaSanPaoloXlsxParser(StatementParser):
             except TypeError:
                 date = self.wb['Lista Operazione']["A20"].value
             return date
-        else:
-            return None
 
     """ Private method to parse all record lines """
     def _get_movimenti_V1(self) -> Iterator[Movimento_V1]:
-        starting_column = 'A'
-        ending_column = 'G'
+        starting_column = column_index_from_string('A')
+        ending_column = column_index_from_string('G')
         starting_row = 30
-        offset = 0
 
-        while True:
-            data = self.wb['Lista Movimenti']\
-                   [f'{starting_column}{starting_row + offset}:'
-                    f'{ending_column}{starting_row + offset}']
-            offset += 1
-
-            values = [*map(lambda x: x.value, data[0])]
-            logging.debug(values)
-            if not values[0]:
-                # Complete transaction table finish, end loop
-                break
+        for row in self.wb['Lista Movimenti'].iter_rows(
+                starting_row, None, starting_column, ending_column,
+                values_only=True):
+            if row[0]:
+                logging.debug(row)
+                yield Movimento_V1(*row)
             else:
-                yield Movimento_V1(*values)
+                break
 
     def _get_movimenti_V2(self) -> Iterator[Movimento_V2]:
-        starting_column = 'A'
-        ending_column = 'H'
+        starting_column = column_index_from_string('A')
+        ending_column = column_index_from_string('H')
         starting_row = 20
-        offset = 0
 
-        while True:
-            data = self.wb['Lista Operazione']\
-                   [f'{starting_column}{starting_row + offset}:'
-                    f'{ending_column}{starting_row + offset}']
-            offset += 1
-            values = [*map(lambda x: x.value, data[0])]
-            logging.debug(values)
-            if not values[0]:
-                # Table finish, end loop
-                break
-            if values[4] == "NON CONTABILIZZATO":
+        for row in self.wb['Lista Operazione'].iter_rows(
+                starting_row, None, starting_column, ending_column,
+                values_only=True):
+            if row[0]:
                 # save only accounted transactions
-                continue
+                if row[4] == "NON CONTABILIZZATO":
+                    continue
+                else:
+                    logging.debug(row)
+                    yield Movimento_V2(*row)
             else:
-                yield Movimento_V2(*values)
+                break
