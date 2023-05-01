@@ -154,8 +154,9 @@ class Movimento_V2(Movimento):
         # !!! Write All key value lower case !!!
         # Map value present in ~/.local/lib/python3.10/site-packages/ofxstatement/statement.py
 
-        categoryMap = {
+        category_map = {
             'addebiti vari': 'DEBIT',
+            'entrate varie': 'CREDIT',
             'abbigliamento e accessori': 'POS',
             'altre uscite': 'POS',
             'associazioni': 'DIRECTDEBIT',
@@ -163,19 +164,21 @@ class Movimento_V2(Movimento):
             'bonifici ricevuti': 'XFER',
             'carburanti': 'PAYMENT',
             'casa varie': 'POS',
-            'cellulare': 'SRVCHG',
+            'cellulare': 'REPEATPMT',
             'cliniche': 'POS',
             'corsi e sport': 'POS',
             'cura della persona': 'POS',
-            'domiciliazioni e utenze': 'DIRECTDEBIT',
+            'domiciliazioni e utenze': 'REPEATPMT',
             'donazioni': 'DIRECTDEBIT',
             'farmacia': 'POS',
             'generi alimentari e supermercato': 'POS',
             'hi-tech e informatica': 'POS',
             'imposte sul reddito e tasse varie': 'FEE',
+            'tasse varie': 'FEE',
+            'commissioni': 'SRVCHG',
             'imposte, bolli e commissioni': 'FEE',
             'pedaggi e telepass': 'FEE',
-            'rate mutuo e finanziamento': 'DIRECTDEBIT',
+            'rate mutuo e finanziamento': 'REPEATPMT',
             'regali ricevuti': 'CREDIT',
             'rimborsi spese e storni': 'CREDIT',
             'ristoranti e bar': 'POS',
@@ -189,7 +192,7 @@ class Movimento_V2(Movimento):
         }
 
         try:
-            cur_transaction = categoryMap[self.categoria.lower()]
+            cur_transaction = category_map[self.categoria.lower()]
         except KeyError:
             cur_transaction = 'CREDIT' if self.importo >= 0 else 'DEBIT'
             logging.warning(
