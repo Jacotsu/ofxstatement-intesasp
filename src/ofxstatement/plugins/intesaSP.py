@@ -45,8 +45,8 @@ class Movimento_V1(Movimento):
 
     def __post_init__(self):
         # Modificare descrizione_estesa per comprendere sempre la descrizione
-        self.descrizione_estesa = f"({self.descrizione}) "\
-                f"{self.descrizione_estesa}"
+        self.descrizione_estesa = f"({self.descrizione}) " \
+                                  f"{self.descrizione_estesa}"
 
         # Una volta raccolti i dati, li formatto nello standard corretto
         self.stat_line = StatementLine(
@@ -134,8 +134,8 @@ class Movimento_V2(Movimento):
 
     def __post_init__(self):
         # Modificare descrizione_estesa per comprendere sempre la categoria
-        descrizione_estesa = f"[({self.categoria})-({self.operazione})] "\
-                f"{self.dettagli}"
+        descrizione_estesa = f"[({self.categoria})-({self.operazione})] " \
+                             f"{self.dettagli}"
 
         # Una volta raccolti i dati, li formatto nello standard corretto
         # NB: Questo formato non prevede la differenziazione tra la data
@@ -214,11 +214,14 @@ class IntesaSanPaoloPlugin(Plugin):
 class IntesaSanPaoloXlsxParser(StatementParser):
     excel_version: int = None
     wb = None
+    settings = None
 
     def __init__(self, filename, settings):
-        logging.debug(settings)
         self.file = filename
         self.wb = load_workbook(self.file)
+        self.settings = settings
+        logging.debug(self.settings)
+
         if 'Lista Movimenti' in self.wb.sheetnames:
             logging.debug('Detected "Lista Movimenti", using V1 excel parser')
             self.excel_version = 1
@@ -244,6 +247,7 @@ class IntesaSanPaoloXlsxParser(StatementParser):
     Override method, use to obrain iterable object consisting of a line per
     transaction
     """
+
     def split_records(self) -> Movimento:
         if self.excel_version == 1:
             return self._get_movimenti_V1()
@@ -253,6 +257,7 @@ class IntesaSanPaoloXlsxParser(StatementParser):
     """
     Override method, use to generate Statement object
     """
+
     def parse(self):
         return super(IntesaSanPaoloXlsxParser, self).parse()
 
@@ -260,6 +265,7 @@ class IntesaSanPaoloXlsxParser(StatementParser):
     Override use to Parse given transaction line and return StatementLine
     object
     """
+
     def parse_record(self, mov: Movimento) -> StatementLine:
         logging.debug(mov.stat_line)
         return mov.stat_line
@@ -268,10 +274,8 @@ class IntesaSanPaoloXlsxParser(StatementParser):
         if self.excel_version == 1:
             return self.wb['Lista Movimenti']['D8'].value
         elif self.excel_version == 2:
-            # Remove the slash in order to make it consistent with the V1
-            # version
-            return self.wb['Lista Operazione']['C7'].value\
-                    .split(" ")[1].replace('/', '')
+            # Remove the slash in order to make it consistent with the V1 version
+            return self.wb['Lista Operazione']['C7'].value.split(" ")[1].replace('/', '')
 
     def _get_currency(self) -> str:
         # !!! Write All key value lower case !!!
@@ -304,18 +308,14 @@ class IntesaSanPaoloXlsxParser(StatementParser):
             date = self.wb['Lista Movimenti']['D11'].value
             return datetime.strptime(date, '%d.%m.%Y')
         elif self.excel_version == 2:
-            # On this version, C16 isn't always present, so calculate
-            # variation directly from record.
+            # On this version, C16 isn't always present, so calculate variation directly from record.
             # Operation are sort by date descending, so select last record
             try:
-                date = datetime.strptime(
-                    self.wb['Lista Operazione']["C16"].value, '%d/%m/%Y'
-                )
-            except TypeError:
+                date = datetime.strptime(self.wb['Lista Operazione']["C16"].value, '%d/%m/%Y')
+            except (TypeError, ValueError):
                 date = None
                 # Find oldest date
-                for row in self.wb['Lista Operazione'].iter_rows(
-                        20, values_only=True):
+                for row in self.wb['Lista Operazione'].iter_rows(20, values_only=True):
                     if row[0]:
                         date = row[0]
                     else:
@@ -331,22 +331,20 @@ class IntesaSanPaoloXlsxParser(StatementParser):
             # variation directly from record.
             # Operation are sort by date descending, so select first record
             try:
-                date = datetime.strptime(
-                    self.wb['Lista Operazione']["C17"].value, '%d/%m/%Y'
-                )
-            except TypeError:
+                date = datetime.strptime(self.wb['Lista Operazione']["C17"].value, '%d/%m/%Y')
+            except (TypeError, ValueError):
                 date = self.wb['Lista Operazione']["A20"].value
             return date
 
     """ Private method to parse all record lines """
+
     def _get_movimenti_V1(self) -> Iterator[Movimento_V1]:
         starting_column = column_index_from_string('A')
         ending_column = column_index_from_string('G')
         starting_row = 30
 
-        for row in self.wb['Lista Movimenti'].iter_rows(
-                starting_row, None, starting_column, ending_column,
-                values_only=True):
+        for row in self.wb['Lista Movimenti']. \
+                iter_rows(starting_row, None, starting_column, ending_column, values_only=True):
             if row[0]:
                 logging.debug(row)
                 yield Movimento_V1(*row)
@@ -358,9 +356,8 @@ class IntesaSanPaoloXlsxParser(StatementParser):
         ending_column = column_index_from_string('H')
         starting_row = 20
 
-        for row in self.wb['Lista Operazione'].iter_rows(
-                starting_row, None, starting_column, ending_column,
-                values_only=True):
+        for row in self.wb['Lista Operazione']. \
+                iter_rows(starting_row, None, starting_column, ending_column, values_only=True):
             if row[0]:
                 # save only accounted transactions
                 if row[4] == "NON CONTABILIZZATO":
