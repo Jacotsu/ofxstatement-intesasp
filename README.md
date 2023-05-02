@@ -48,7 +48,7 @@ $ printf '\n# Intesa excel convert to OFX format\nalias ofxIntesa="ofxstatement 
 ```
 After that, reload your terminal (close and then reopen) and the usage change to:
 ```bash
-  $ ofxIntesa IntesaSP Movimenti_Conto_<date>.xlsx Movimenti.ofx
+  $ ofxIntesa Movimenti_Conto_<date>.xlsx Movimenti.ofx
 ```
 **Note**: If after reload alias are not loading, go in your *.bashrc* and check if follow line are present, if not, add it on the end:
 ```bash
