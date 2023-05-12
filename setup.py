@@ -17,6 +17,7 @@ setup(name='ofxstatement-intesasp',
       url="https://github.com/Jacotsu/ofxstatement-intesasp",
       description=("Plugin for ofxstatement that supports Intesa San paolo xlsx file"),
       long_description=long_description,
+      long_description_content_type='text/markdown',
       license="GPLv3",
       keywords=["ofx", "banking", "statement"],
       classifiers=[
