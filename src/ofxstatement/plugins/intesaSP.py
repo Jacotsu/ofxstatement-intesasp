@@ -156,7 +156,7 @@ class Movimento_V2(Movimento):
 
         category_map = {
             'addebiti vari': 'DEBIT',
-            'entrate varie': 'CREDIT',
+            'entrate varie': 'DIRECTDEP',
             'abbigliamento e accessori': 'POS',
             'altre uscite': 'POS',
             'associazioni': 'DIRECTDEBIT',
