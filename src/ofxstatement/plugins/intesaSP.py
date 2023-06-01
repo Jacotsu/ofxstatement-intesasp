@@ -173,6 +173,7 @@ class Movimento_V2(Movimento):
             'farmacia': 'POS',
             'generi alimentari e supermercato': 'POS',
             'hi-tech e informatica': 'POS',
+            'elettrodomestici, arredamento e giardino': 'POS',
             'imposte sul reddito e tasse varie': 'FEE',
             'tasse varie': 'FEE',
             'commissioni': 'SRVCHG',
