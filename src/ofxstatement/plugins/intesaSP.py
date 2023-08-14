@@ -174,6 +174,7 @@ class Movimento_V2(Movimento):
             'generi alimentari e supermercato': 'POS',
             'hi-tech e informatica': 'POS',
             'elettrodomestici, arredamento e giardino': 'POS',
+            'libri, film e musica': 'POS',
             'imposte sul reddito e tasse varie': 'FEE',
             'tasse varie': 'FEE',
             'commissioni': 'SRVCHG',
