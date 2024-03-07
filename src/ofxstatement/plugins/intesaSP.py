@@ -172,17 +172,21 @@ class Movimento_V2(Movimento):
             'donazioni': 'DIRECTDEBIT',
             'farmacia': 'POS',
             'generi alimentari e supermercato': 'POS',
+            'gas & energia elettrica': 'DIRECTDEBIT',
             'hi-tech e informatica': 'POS',
             'elettrodomestici, arredamento e giardino': 'POS',
             'libri, film e musica': 'POS',
+            'manutenzione veicoli': 'POS',
             'imposte sul reddito e tasse varie': 'FEE',
             'tasse varie': 'FEE',
             'commissioni': 'SRVCHG',
             'imposte, bolli e commissioni': 'FEE',
             'pedaggi e telepass': 'FEE',
+            'polizze': 'DIRECTDEBIT',
             'rate mutuo e finanziamento': 'REPEATPMT',
             'regali ricevuti': 'CREDIT',
             'rimborsi spese e storni': 'CREDIT',
+            'rimborsi spese mediche': 'CREDIT',
             'ristoranti e bar': 'POS',
             'spese mediche': 'POS',
             'spettacoli e musei': 'POS',
@@ -196,12 +200,12 @@ class Movimento_V2(Movimento):
         try:
             cur_transaction = category_map[self.categoria.lower()]
         except KeyError:
-            cur_transaction = 'CREDIT' if self.importo >= 0 else 'DEBIT'
+            cur_transaction = 'CREDIT' if self.importo >= 0 else 'POS'
             logging.warning(
                 f"Unknown category: '{self.categoria}', "
-                f"assigning generic category: '{cur_transaction}'"
+                f"assigning generic category: '{cur_transaction}'\n"
                 f"PLEASE open an issue on GitHub '{GITHUB_URL}' "
-                "in order to help us fix it"
+                "in order to help us to fix it"
             )
         return cur_transaction
 
@@ -217,6 +221,7 @@ class IntesaSanPaoloXlsxParser(StatementParser):
     excel_version: int = None
     wb = None
     settings = None
+    tableStart: int = None
 
     def __init__(self, filename, settings):
         self.file = filename
@@ -230,6 +235,12 @@ class IntesaSanPaoloXlsxParser(StatementParser):
         elif 'Lista Operazione' in self.wb.sheetnames:
             logging.debug('Detected "Lista Operazione", using V2 excel parser')
             self.excel_version = 2
+            self.tableStart = 10  # Find first DATA cell in table, scroll untile "Data" title found
+            while True:
+                val = self.wb['Lista Operazione'][f"A{self.tableStart}"].value
+                self.tableStart += 1
+                if val == "Data":
+                    break
         else:
             logging.error('Unknown excel format, aborting')
             exit(os.EX_IOERR)
@@ -290,7 +301,13 @@ class IntesaSanPaoloXlsxParser(StatementParser):
             # Takes the currency from the first operation
             # this should be safe because there is always atleast 1 operation
             # since you can't export empty files
-            val = self.wb['Lista Operazione']['G20'].value  # First operation
+            index = 20  # Find first cell under Title
+            while True:
+                val = self.wb['Lista Operazione'][f"G{index}"].value
+                if val == "Valuta":
+                    index += 1
+                else:
+                    break
         return trans_map[val.lower()]
 
     def _get_start_balance(self) -> Decimal:
@@ -312,12 +329,19 @@ class IntesaSanPaoloXlsxParser(StatementParser):
         elif self.excel_version == 2:
             # On this version, C16 isn't always present, so calculate variation directly from record.
             # Operation are sort by date descending, so select last record
+            index = 16  # Find first cell to search
+            while True:
+                if self.wb['Lista Operazione'][f"B{index}"].value == "Data inizio periodo:":
+                    val = self.wb['Lista Operazione'][f"C{index}"].value
+                    break
+                else:
+                    index += 1
             try:
-                date = datetime.strptime(self.wb['Lista Operazione']["C16"].value, '%d/%m/%Y')
+                date = datetime.strptime(val, '%d/%m/%Y')
             except (TypeError, ValueError):
                 date = None
                 # Find oldest date
-                for row in self.wb['Lista Operazione'].iter_rows(20, values_only=True):
+                for row in self.wb['Lista Operazione'].iter_rows(self.tableStart, values_only=True):
                     if row[0]:
                         date = row[0]
                     else:
@@ -332,10 +356,17 @@ class IntesaSanPaoloXlsxParser(StatementParser):
             # On this version, C17 isn't always present, so calculate
             # variation directly from record.
             # Operation are sort by date descending, so select first record
+            index = 16  # Find first cell to search
+            while True:
+                if self.wb['Lista Operazione'][f"B{index}"].value == "Data fine periodo:":
+                    val = self.wb['Lista Operazione'][f"C{index}"].value
+                    break
+                else:
+                    index += 1
             try:
-                date = datetime.strptime(self.wb['Lista Operazione']["C17"].value, '%d/%m/%Y')
+                date = datetime.strptime(val, '%d/%m/%Y')
             except (TypeError, ValueError):
-                date = self.wb['Lista Operazione']["A20"].value
+                date = self.wb['Lista Operazione'][f"A{self.tableStart}"].value
             return date
 
     """ Private method to parse all record lines """
@@ -356,7 +387,7 @@ class IntesaSanPaoloXlsxParser(StatementParser):
     def _get_movimenti_V2(self) -> Iterator[Movimento_V2]:
         starting_column = column_index_from_string('A')
         ending_column = column_index_from_string('H')
-        starting_row = 20
+        starting_row = self.tableStart
 
         for row in self.wb['Lista Operazione']. \
                 iter_rows(starting_row, None, starting_column, ending_column, values_only=True):
