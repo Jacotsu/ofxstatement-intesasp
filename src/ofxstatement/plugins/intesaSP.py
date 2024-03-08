@@ -190,6 +190,7 @@ class Movimento_V2(Movimento):
             'ristoranti e bar': 'POS',
             'spese mediche': 'POS',
             'spettacoli e musei': 'POS',
+            'spese importanti e ristrutturazione':'XFER',
             'stipendi e pensioni': 'DIRECTDEP',
             'tv, internet, telefono': 'POS',
             'tabaccai e simili': 'POS',
