@@ -183,14 +183,16 @@ class Movimento_V2(Movimento):
             'imposte, bolli e commissioni': 'FEE',
             'pedaggi e telepass': 'FEE',
             'polizze': 'DIRECTDEBIT',
+            'prelievi': 'DIRECTDEP',
             'rate mutuo e finanziamento': 'REPEATPMT',
             'regali ricevuti': 'CREDIT',
             'rimborsi spese e storni': 'CREDIT',
             'rimborsi spese mediche': 'CREDIT',
             'ristoranti e bar': 'POS',
+            'spese condominiali' : 'REPEATPMT',
             'spese mediche': 'POS',
             'spettacoli e musei': 'POS',
-            'spese importanti e ristrutturazione':'XFER',
+            'spese importanti e ristrutturazione': 'XFER',
             'stipendi e pensioni': 'DIRECTDEP',
             'tv, internet, telefono': 'POS',
             'tabaccai e simili': 'POS',
@@ -331,10 +333,13 @@ class IntesaSanPaoloXlsxParser(StatementParser):
             # On this version, C16 isn't always present, so calculate variation directly from record.
             # Operation are sort by date descending, so select last record
             index = 16  # Find first cell to search
+            # TODO: Andare a vedere transazione più nuova nella colonna A
             while True:
                 if self.wb['Lista Operazione'][f"B{index}"].value == "Data inizio periodo:":
                     val = self.wb['Lista Operazione'][f"C{index}"].value
                     break
+                elif self.wb['Lista Operazione'][f"B{index}"].value == "Operazione":
+                    return datetime.now()
                 else:
                     index += 1
             try:
@@ -358,10 +363,13 @@ class IntesaSanPaoloXlsxParser(StatementParser):
             # variation directly from record.
             # Operation are sort by date descending, so select first record
             index = 16  # Find first cell to search
+            # TODO: Andare a vedere transazione più vecchia nella colonna A
             while True:
                 if self.wb['Lista Operazione'][f"B{index}"].value == "Data fine periodo:":
                     val = self.wb['Lista Operazione'][f"C{index}"].value
                     break
+                elif self.wb['Lista Operazione'][f"B{index}"].value == "Operazione":
+                    return datetime.now()
                 else:
                     index += 1
             try:
