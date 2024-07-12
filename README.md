@@ -31,9 +31,17 @@ ABI = 00000
 CAB = 00000
 plugin = IntesaSP
 ```
-
 Save and exit the text editor
 
+### Example
+As example, if in your excel you see: `Conto 1234/00009876`
+Configuration shuld be:
+```
+[IntesaSP]
+ABI = 1234
+CAB = 00009876
+plugin = IntesaSP
+```
 
 ## Usage
 Download your transactions file from the official bank's site and then run
