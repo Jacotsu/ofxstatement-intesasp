@@ -34,10 +34,10 @@ plugin = IntesaSP
 Save and exit the text editor
 
 ### Example
-As example, if in your excel you see: `Conto 1234/00009876`
+As example, if in your excel you see: `Conto 1234/00009876` or `Conto 12349876` (*Note: the 0000 if is missing shuld be add in CAB*)
 Configuration shuld be:
 ```
-[IntesaSP]
+[Conf-Name]
 ABI = 1234
 CAB = 00009876
 plugin = IntesaSP
@@ -46,8 +46,10 @@ plugin = IntesaSP
 ## Usage
 Download your transactions file from the official bank's site and then run
 ```bash
-$ ofxstatement convert -t IntesaSP Movimenti_Conto_<date>.xlsx Movimenti.ofx
+$ ofxstatement convert -t Conf-Name Movimenti_Conto_<date>.xlsx Movimenti.ofx
 ```
+
+  Note, is possible have multiple setting, simply use different Name
 
 ### Add Alias
 To simplify the use of the plugin, we strongly recommend adding an alias to your system (if in a Linux environment or on an emulated terminal) by adding the alias of this command to your *.bash_aliases*:
@@ -77,4 +79,5 @@ This repository in particular allows you to convert the records that **Intesa Sa
 Once you have the `ofx` file, you can use any program to manage your finances.
 Among the many available, a non-exhaustive list of open source products is:
 
-- [HomeBank](http://homebank.free.fr/en/index.php), continuously updated program, present everywhere except in smartphones, with many beautiful ideas and listening to the community. **100% compatibility** 
+- [HomeBank](http://homebank.free.fr/en/index.php), continuously updated program, present everywhere except in smartphones, with many beautiful ideas and listening to the community. **100% compatibility**
+  To use automatic count mapping i suggest to open the `*.ofx` file and search `<BANKID>` or `<ACCTID>`, and insert one of this 2 (possible populated) and try.
