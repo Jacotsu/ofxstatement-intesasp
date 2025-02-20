@@ -170,12 +170,14 @@ class Movimento_V2(Movimento):
             'cura della persona': 'POS',
             'domiciliazioni e utenze': 'REPEATPMT',
             'donazioni': 'DIRECTDEBIT',
+            'famiglie varie' : 'POS',
             'farmacia': 'POS',
             'generi alimentari e supermercato': 'POS',
             'gas & energia elettrica': 'DIRECTDEBIT',
             'hi-tech e informatica': 'POS',
             'elettrodomestici, arredamento e giardino': 'POS',
             'libri, film e musica': 'POS',
+            'manutenzione casa' : 'POS',
             'manutenzione veicoli': 'POS',
             'imposte sul reddito e tasse varie': 'FEE',
             'tasse varie': 'FEE',
@@ -194,6 +196,7 @@ class Movimento_V2(Movimento):
             'spettacoli e musei': 'POS',
             'spese importanti e ristrutturazione': 'XFER',
             'stipendi e pensioni': 'DIRECTDEP',
+            'treno, aereo, nave' : 'POS',
             'tv, internet, telefono': 'POS',
             'tabaccai e simili': 'POS',
             'tempo libero varie': 'POS',
@@ -201,7 +204,7 @@ class Movimento_V2(Movimento):
         }
 
         try:
-            cur_transaction = category_map[self.categoria.lower()]
+            cur_transaction = category_map[self.categoria.lower().strip()]
         except KeyError:
             cur_transaction = 'CREDIT' if self.importo >= 0 else 'POS'
             logging.warning(
