@@ -152,7 +152,7 @@ class Movimento_V2(Movimento):
         # OFX Spec https://financialdataexchange.org/ofx
         # 11.4.4.3 Transaction Types Used in <TRNTYPE>
         # !!! Write All key value lower case !!!
-        # Map value present in ~/.local/lib/python3.10/site-packages/ofxstatement/statement.py
+        # Map value present in ~/.local/lib/python3.xx/site-packages/ofxstatement/statement.py
 
         category_map = {
             'addebiti vari': 'DEBIT',
@@ -168,6 +168,7 @@ class Movimento_V2(Movimento):
             'cliniche': 'POS',
             'corsi e sport': 'POS',
             'cura della persona': 'POS',
+            'disposizione di bonifico': 'PAYMENT',
             'domiciliazioni e utenze': 'REPEATPMT',
             'donazioni': 'DIRECTDEBIT',
             'famiglie varie' : 'POS',
